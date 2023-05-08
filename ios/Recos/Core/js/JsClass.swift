@@ -185,6 +185,7 @@ class JsEffect {
 
 class JsObject: MemberProvider {
     var fields = [String : Any?]()
+    var isEntryObject = false
 
     func getValue(variable: String) -> Any? {
         return fields[variable] as Any?
@@ -208,20 +209,21 @@ class JsObject: MemberProvider {
     func toJsStyle() -> JsStyle {
         var jsStyle = JsStyle()
 
-        let width = CGFloat(self.getValue(variable: "width") as? Float ?? 0)
-        let height = CGFloat(self.getValue(variable: "height") as? Float ?? 0)
+        let test2 = self.getValue(variable: "height") as? Int ?? 0
+        let width = CGFloat(self.getValue(variable: "width") as? Int ?? 0)
+        let height = CGFloat(self.getValue(variable: "height") as? Int ?? 0)
         jsStyle.width = width == 0 ? nil : width
         jsStyle.height = height == 0 ? nil : height
-        jsStyle.lineHeight = CGFloat(self.getValue(variable: "lineHeight") as? Float ?? 0)
-        jsStyle.letterSpacing = CGFloat(self.getValue(variable: "letterSpacing") as? Float ?? 0)
+        jsStyle.lineHeight = CGFloat(self.getValue(variable: "lineHeight") as? Int ?? 0)
+        jsStyle.letterSpacing = CGFloat(self.getValue(variable: "letterSpacing") as? Int ?? 0)
         
-        jsStyle.margin = CGFloat(self.getValue(variable: "margin") as? Float ?? 0)
-        jsStyle.marginLeft = CGFloat(self.getValue(variable: "marginLeft") as? Float ?? 0)
-        jsStyle.marginRight = CGFloat(self.getValue(variable: "marginRight") as? Float ?? 0)
-        jsStyle.marginTop = CGFloat(self.getValue(variable: "marginTop") as? Float ?? 0)
-        jsStyle.marginBottom = CGFloat(self.getValue(variable: "marginBottom") as? Float ?? 0)
+        jsStyle.margin = CGFloat(self.getValue(variable: "margin") as? Int ?? 0)
+        jsStyle.marginLeft = CGFloat(self.getValue(variable: "marginLeft") as? Int ?? 0)
+        jsStyle.marginRight = CGFloat(self.getValue(variable: "marginRight") as? Int ?? 0)
+        jsStyle.marginTop = CGFloat(self.getValue(variable: "marginTop") as? Int ?? 0)
+        jsStyle.marginBottom = CGFloat(self.getValue(variable: "marginBottom") as? Int ?? 0)
         
-        jsStyle.fontSize = CGFloat(self.getValue(variable: "fontSize") as? Float ?? 0)
+        jsStyle.fontSize = CGFloat(self.getValue(variable: "fontSize") as? Int ?? 0)
         let fontColorValue = self.getValue(variable: "color")
         if fontColorValue != nil {
             jsStyle.fontColor = Color(UIColor.init(hex: fontColorValue as! String))
@@ -251,7 +253,7 @@ class JsObject: MemberProvider {
             jsStyle.backgroundColor = Color(UIColor.init(hex: backgroundColorValue!))
         }
 
-        let borderRadius = self.getValue(variable: "borderRadius") as? Float ?? 0
+        let borderRadius = self.getValue(variable: "borderRadius") as? Int ?? 0
         jsStyle.borderRadius = CGFloat(borderRadius)
         
         let borderColorValue = self.getValue(variable: "borderColor") as? String

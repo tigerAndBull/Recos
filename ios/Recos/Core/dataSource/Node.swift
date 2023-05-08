@@ -223,7 +223,9 @@ public struct FunctionDecl {
             let node = self.params[0]
             if node.type == TYPE_EXPR_ID {
                 let content = node.content as! IdInfo
+                // todo 赋值
                 let object = JsObject()
+                object.isEntryObject = true
                 data?.forEach({ (key: String, value: Any) in
                     object.setValue(variable: key, value: value)
                 })

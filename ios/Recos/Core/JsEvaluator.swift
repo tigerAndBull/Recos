@@ -392,7 +392,8 @@ class JsEvaluator {
             
         } else if(value.type == TYPE_EXPR_MEMBER) {
             let memberExpr = value.content as! MemeberExpr
-            let obj = getJsValue(obj: parseExprValue(value: memberExpr.obj, frame: frame, scope: scope))
+            let exprValue = parseExprValue(value: memberExpr.obj, frame: frame, scope: scope)
+            let obj = getJsValue(obj: exprValue)
             if obj is MemberProvider {
                 return parseMember(obj: obj as! MemberProvider, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
             } else if obj is JsVariable {
@@ -401,11 +402,18 @@ class JsEvaluator {
                 targetArray.push(item: object)
                 targetArray.memberSetter(name: "0")(object)
                 return parseMember(obj: targetArray, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
-            } else {
+            } else if obj is Array<Any> {
                 let targetArray = JsArray()
-                targetArray.push(item: obj)
-                targetArray.memberSetter(name: "0")(obj)
+                targetArray.list = obj as! Array<Any>
+//                targetArray.memberSetter(name: "0")(obj)
                 return parseMember(obj: targetArray, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
+            } else if obj is [String : Any?] {
+                let jsObject = JsObject()
+                jsObject.fields = obj as! [String : Any?]
+                jsObject.isEntryObject = true
+                return parseMember(obj: jsObject, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
+            } else {
+                return obj
             }
             assert(false, "can not support this type")
             return nil
@@ -503,6 +511,26 @@ class JsEvaluator {
             return JsMember(obj: obj, name: idInfo.name)
         }
         return nil
+    }
+    
+    func findKeyForNestDict(name: String, dict: [String : Any?]) -> Any? {
+        var result: Any? = nil;
+        if dict.isEmpty {
+            return result
+        }
+        dict.forEach { (key: String, value: Any?) in
+            if name == key {
+                result = value
+            } else if value is Array<[String : Any?]> {
+                let array = value as! Array<[String : Any?]>
+                array.forEach { item in
+                    result = findKeyForNestDict(name: name, dict: item)
+                }
+            } else if value is [String : Any?] {
+                result = findKeyForNestDict(name: name, dict: value as! [String : Any?])
+            }
+        }
+        return result
     }
     
     func unaryCalculate(scope: JsScope, unaryData: UnaryData, frame: JsStackFrame) -> Any? {
@@ -605,6 +633,12 @@ class JsEvaluator {
             result = left % right
             return result
         case ">":
+            if leftValue is String && (rightValue is Int) {
+                if leftValue != nil {
+                    return true
+                }
+                return false
+            }
             if leftValue is Float && rightValue is Float {
                 return (leftValue as! Float) > (rightValue as! Float)
             }
@@ -632,6 +666,9 @@ class JsEvaluator {
             }
             return Float(leftValue as! Int) < (rightValue as! Float)
         case "<=":
+            if leftValue == nil {
+                leftValue = 0
+            }
             if leftValue is Float && rightValue is Float {
                 return (leftValue as! Float) <= (rightValue as! Float)
             }
@@ -646,6 +683,10 @@ class JsEvaluator {
             }
             return Float(leftValue as! Int) <= (rightValue as! Float)
         case "==":
+            if let _ = leftValue,
+               rightValue == nil {
+                return false
+            }
             if leftValue is Int && rightValue is Float {
                 return (leftValue as! Int) == Int(rightValue as! Float)
             }
@@ -752,25 +793,10 @@ struct EvalImage : View {
     }
     
     var body: some View {
-        let placeholderOne = UIImage(named: self.placeholder)
-        Image(uiImage: self.remoteImage ?? placeholderOne!).resizable()
-//            .onAppear(perform: fetchRemoteImage)
-            .frame(width: self.width, height: self.height, alignment: .center)
+        AsyncImage(url: URL(string: self.url)).frame(width: self.width, height: self.height)
+            .scaledToFill()
             .cornerRadius(self.borderRadius)
     }
-    
-//    func fetchRemoteImage() {
-//        guard let url = URL(string: self.url) else { return }
-//        URLSession.shared.dataTask(with: url){ (data, response, error) in
-//            if let image = UIImage(data: data!){
-//                self.remoteImage = image
-//            }
-//            else{
-//                print(error ?? "image loading error, no error info")
-//            }
-//        }.resume()
-//    }
-
 }
     
 struct EvalView : View {
@@ -781,7 +807,9 @@ struct EvalView : View {
     
     init(bundleName: String, moduleName: String, entryData: [String: Any]? = nil) {
         let defaultRecosDataSource = DefaultRecosDataSource.init()
+        print("时间a", Date().timeIntervalSince1970)
         defaultRecosDataSource.parse(bundleName: bundleName)
+        print("时间a", Date().timeIntervalSince1970)
         let function = defaultRecosDataSource.getModel(moduleName: moduleName)
         let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
         self.evaluator = jsEvaluator
@@ -821,10 +849,6 @@ struct EvalView : View {
         self.functionDecl = functionDecl
         self.args = args
         self.evaluator = evaluator
-    }
-    
-    func prepareEntryData() {
-        
     }
     
     var body : some View {

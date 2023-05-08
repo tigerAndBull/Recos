@@ -7,16 +7,16 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "344332D3-6332-4FDE-B059-B5E2233C5A35"
-            shouldBeEnabled = "Yes"
+            uuid = "97460428-C4CD-4BDD-8C3B-825BC0A5B934"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Recos/Core/dataSource/RenderElement.swift"
+            filePath = "Recos/Core/js/JsClass.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "220"
-            endingLineNumber = "220"
-            landmarkName = "init(jsEvaluator:functionDecl:args:)"
+            startingLineNumber = "318"
+            endingLineNumber = "318"
+            landmarkName = "getMemeber(name:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

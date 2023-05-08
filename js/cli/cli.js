@@ -43,7 +43,7 @@ function parseFile(sourcePath) {
     return parse(sourceContent.program.body)
 }
 
-let content = fs.readFileSync('/Users/anwenhu/Desktop/MineProject/Recos/js/test/src/testLogic/index.tsx', 'utf8')
+let content = fs.readFileSync('/Users/anwenhu/Desktop/MineProject/RecosFork/Recos/js/test/src/feedCard/index.tsx', 'utf8')
     let sourceContent = babelParser.parse(content, {
         sourceType: "module",
         plugins: [

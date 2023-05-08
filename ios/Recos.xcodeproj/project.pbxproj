@@ -18,6 +18,7 @@
 		202808EC26C2E87B00B6C3F0 /* waterfall.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 202808EB26C2E87B00B6C3F0 /* waterfall.bundle */; };
 		202808EF26C3D7DF00B6C3F0 /* alignment-guides-tool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 202808EE26C3D7DE00B6C3F0 /* alignment-guides-tool.swift */; };
 		202808F126C3DA6700B6C3F0 /* css_style.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 202808F026C3DA6600B6C3F0 /* css_style.bundle */; };
+		206D289C29FA79EA006C7535 /* feedCard.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 206D289B29FA79EA006C7535 /* feedCard.bundle */; };
 		208697A829D9B45400ABEA42 /* viewTest.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 208697A729D9B45400ABEA42 /* viewTest.bundle */; };
 		208697AA29D9C19E00ABEA42 /* testLogic.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 208697A929D9C19E00ABEA42 /* testLogic.bundle */; };
 		209245C7269229AD00C0DF61 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 209245C6269229AD00C0DF61 /* AppDelegate.swift */; };
@@ -60,6 +61,7 @@
 		202808EB26C2E87B00B6C3F0 /* waterfall.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = waterfall.bundle; sourceTree = "<group>"; };
 		202808EE26C3D7DE00B6C3F0 /* alignment-guides-tool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "alignment-guides-tool.swift"; sourceTree = "<group>"; };
 		202808F026C3DA6600B6C3F0 /* css_style.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = css_style.bundle; sourceTree = "<group>"; };
+		206D289B29FA79EA006C7535 /* feedCard.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = feedCard.bundle; sourceTree = "<group>"; };
 		208697A729D9B45400ABEA42 /* viewTest.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = viewTest.bundle; sourceTree = "<group>"; };
 		208697A929D9C19E00ABEA42 /* testLogic.bundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = testLogic.bundle; sourceTree = "<group>"; };
 		209245C3269229AD00C0DF61 /* Recos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Recos.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -207,6 +209,7 @@
 		209245EE26922A7800C0DF61 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
+				206D289B29FA79EA006C7535 /* feedCard.bundle */,
 				208697A929D9C19E00ABEA42 /* testLogic.bundle */,
 				208697A729D9B45400ABEA42 /* viewTest.bundle */,
 				2006DEE026C91E5D0030A07A /* selectFriend.bundle */,
@@ -317,6 +320,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				206D289C29FA79EA006C7535 /* feedCard.bundle in Resources */,
 				2095EABB269D97AA003F982C /* hello.bundle in Resources */,
 				209245D3269229B000C0DF61 /* LaunchScreen.storyboard in Resources */,
 				202808EC26C2E87B00B6C3F0 /* waterfall.bundle in Resources */,
@@ -547,14 +551,15 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Recos/Preview Content\"";
-				DEVELOPMENT_TEAM = JGZKPAYJ7R;
+				DEVELOPMENT_TEAM = RXC3P4W9UX;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Recos/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tigerAndBull.Recos;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiangjia.kwai.anwenhutest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Recos/Recos-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -572,14 +577,15 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"Recos/Preview Content\"";
-				DEVELOPMENT_TEAM = JGZKPAYJ7R;
+				DEVELOPMENT_TEAM = RXC3P4W9UX;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Recos/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tigerAndBull.Recos;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiangjia.kwai.anwenhutest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Recos/Recos-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;

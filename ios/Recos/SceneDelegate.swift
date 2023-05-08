@@ -23,15 +23,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 //            let value = context?.evaluateScript("let test1 = 100 \n for (let i = 0; i < 200000; i++) {  test1 += 10 }")?.toInt32()
 //            print(value)
 //            print("JS engine", Date().timeIntervalSince1970)
-
-//            print("测试", Date().timeIntervalSince1970)
+            
 //            let model = ["name": "111", "invalidTimeStamp": 10000, "pageName": "home_page"] as [String : Any]
+//            print("测试", Date().timeIntervalSince1970)
 //            let mallType = getMallTypeByPageName(pageName: model["pageName"] as! String)
 //            let mallName = getNameByPageName(pageName: model["pageName"] as! String)
-//            let timeStamp = parseTimeStamp(invalidTimeStamp: model["invalidTimeStamp"] as! Int)
+//            _ = parseTimeStamp(invalidTimeStamp: model["invalidTimeStamp"] as! Int)
 //            report(mallType: mallType, mallName: mallName)
 //            print("测试", Date().timeIntervalSince1970)
-//            print(timeStamp)
             
             window.makeKeyAndVisible()
         }
@@ -39,8 +38,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     func report(mallType: Int, mallName: String) {
         print("打点上报")
-        print(mallName)
-        print(mallType)
     }
     
     func getNameByPageName(pageName: String) -> String {

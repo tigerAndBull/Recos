@@ -12,10 +12,14 @@ export declare function useCallback<T extends (...args: any[]) => any>(callback:
 
 
 export declare function View(style: Object,
-                             onClick: () => void)
+                             onClick?: () => void)
 
 export declare function Text(style: Object,
-                             onClick: () => void)
+                             onClick?: () => void)
+
+export declare function Image(style: Object,
+                              url: String,
+                             onClick?: () => void)
 
 export declare function RecyclerView(style: Object,
                                      spanCount: number = 1,

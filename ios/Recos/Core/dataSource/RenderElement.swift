@@ -17,6 +17,7 @@ class JsxRenderElement : RenderElement {
     var name: String
     var props: [String : Any]
     var children: [RenderElement]?
+    var payLoad: AnyView? = nil
     
     init(jsEvaluator: JsEvaluator, name: String, props: [String : Any], children: [RenderElement]?) {
         self.jsEvaluator = jsEvaluator
@@ -31,7 +32,9 @@ class JsxRenderElement : RenderElement {
     
     func Render() -> AnyView? {
         var style: JsObject?
-        
+        if payLoad != nil {
+            return payLoad
+        }
         switch name {
             case "RecyclerView":
                 let count = props["count"] as? Int ?? 0
@@ -46,13 +49,13 @@ class JsxRenderElement : RenderElement {
                                     EvalView(functionDecl: child!, args: [index], evaluator: self.jsEvaluator)
                                 }
                             }
-//                            Button(action: self.loadMore) {
-//                                Text("你好")
-//                            }.onAppear {
-//                                DispatchQueue.global(qos: .background).asyncAfter(deadline: DispatchTime(uptimeNanoseconds: 10)) {
-//
-//                                }
-//                            }
+                            Button(action: self.loadMore) {
+                                Text("load more 视图")
+                            }.onAppear {
+                                DispatchQueue.global(qos: .background).asyncAfter(deadline: DispatchTime(uptimeNanoseconds: 10)) {
+
+                                }
+                            }
                         }
                     }
                     return AnyView(list)
@@ -74,14 +77,31 @@ class JsxRenderElement : RenderElement {
                 })
                 let functionDecl = (props["onClick"] as? JsFunctionDecl)
                 let jsStyle = style?.toJsStyle() ?? JsStyle()
-                return createText(style: jsStyle, functionDecl: functionDecl, textString: textString)
+                payLoad = createText(style: jsStyle, functionDecl: functionDecl, textString: textString)
+                return payLoad
             case "Image":
                 style = self.props["style"] as? JsObject
-                let height = style?.getValue(variable: "height") as? Float ?? 0
-                let width = style?.getValue(variable: "width") as? Float ?? 0
-                let raidus = style?.getValue(variable: "borderRadius") as? Float ?? 0
-                let url = self.props["source"] as? String
-                return AnyView(EvalImage(url: url ?? "", placeholder: "placeholder", width: CGFloat(width), height: CGFloat(height), borderRadius: CGFloat(raidus)))
+                var height = style?.getValue(variable: "height") as? Int ?? 0
+                var width = style?.getValue(variable: "width") as? Int ?? 0
+                var raidus = style?.getValue(variable: "borderRadius") as? Int ?? 0
+                let url = self.props["url"] as? String
+            
+                let styles = self.props["style"] as? JsArray
+                styles?.list.forEach { item in
+                    if let item = item as? JsObject {
+                        if item.fields["height"] != nil {
+                            height = item.getValue(variable: "height") as? Int ?? 0
+                        }
+                        if item.fields["width"] != nil {
+                            width = item.getValue(variable: "width") as? Int ?? 0
+                        }
+                        if item.fields["borderRadius"] != nil {
+                            raidus = item.getValue(variable: "borderRadius") as? Int ?? 0
+                        }
+                    }
+                }
+                payLoad = AnyView(EvalImage(url: url ?? "", placeholder: "placeholder", width: CGFloat(width), height: CGFloat(height), borderRadius: CGFloat(raidus)))
+                return payLoad
             case "Button":
                 style = self.props["style"] as? JsObject
                 var textString = String()
@@ -129,7 +149,12 @@ class JsxRenderElement : RenderElement {
                         }
                     }
                 }
-                return AnyView(DefaultFlexBoxView(keys: keys, data: renderItemArray, style: style))
+                if ((style?.fields["height"]) != nil) {
+                    payLoad = AnyView(FlexBoxViewWithWidthHeight(keys: keys, data: renderItemArray, style: style))
+                } else {
+                    payLoad = AnyView(DefaultFlexBoxView(keys: keys, data: renderItemArray, style: style))
+                }
+                return payLoad
             case "Crossfade":
                 print("Crossfade")
                 let functionDecl = (props["content"] as? JsFunctionDecl)
@@ -204,7 +229,7 @@ class JsxValueRenderElement : RenderElement {
         } else if value is JsArray {
             let jsArray = value as! JsArray
             for (index, _) in jsArray.list.enumerated() {
-                (jsArray.get(index: index) as? JsxRenderElement)?.Render()
+                _ = (jsArray.get(index: index) as? JsxRenderElement)?.Render()
             }
         }
         return nil

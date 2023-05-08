@@ -29,38 +29,28 @@ struct ContentView : View {
     var body: some View {
         NavigationView {
             List {
-                NavigationLink(destination: EvalView(bundleName: "differentHeight", moduleName: "HelloWorld")) {
-                    Text("ListView: have different style, can click")
-                }
-//                NavigationLink(destination: EvalView(bundleName: "hello", moduleName: "HelloWorld")) {
-//                    Text("ListView: show a lot of data, can click")
+//                NavigationLink(destination: EvalView(bundleName: "differentHeight", moduleName: "HelloWorld")) {
+//                    Text("ListView: have different style, can click")
 //                }
-//                NavigationLink(destination: EvalView(bundleName: "image", moduleName: "HelloWorld")) {
-//                    Text("Image: load local image / internet image")
+//                NavigationLink(destination: EvalView(bundleName: "selectFriend", moduleName: "SelectFriendLoadView")) {
+//                    Text("Select Friend")
 //                }
-//                NavigationLink(destination: EvalView(bundleName: "css_style", moduleName: "HelloWorld")) {
-//                    Text("CSS: show all css style")
+//                NavigationLink(destination: TestLazyStack()) {
+//                    Text("Test")
 //                }
-//                NavigationLink(destination: RecosContentView()) {
-//                    Text("Flex Box")
+//                NavigationLink(destination: NavigationLazyView(TestView().onAppear(perform: testLog))) {
+//                    Text("tk view Test")
 //                }
-//                NavigationLink(destination: EvalView(bundleName: "waterfall", moduleName: "Waterfall")) {
-//                    Text("Water Fall")
+//                NavigationLink(destination: TestLogicView().onAppear(perform: testLog)) {
+//                    Text("tk logic Test")
 //                }
-//                NavigationLink(destination: AlignmentGuidesToolContentView()) {
-//                    Text("AlignmentGuides")
-//                }
-                NavigationLink(destination: EvalView(bundleName: "selectFriend", moduleName: "SelectFriendLoadView")) {
-                    Text("Select Friend")
-                }
-                NavigationLink(destination: TestLazyStack()) {
-                    Text("Test")
-                }
-                NavigationLink(destination: NavigationLazyView(TestView().onAppear(perform: testLog))) {
-                    Text("tk view Test")
-                }
-                NavigationLink(destination: TestLogicView().onAppear(perform: testLog)) {
-                    Text("tk logic Test")
+                
+                let rankInfo = [ "rankText": "排行榜第一", "rankUrl": "https://upload-images.jianshu.io/upload_images/5632003-7f62fae2e5b3ffbe.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" ] as [String : Any]
+                let itemInfo = ["imgUrl": "https://img1.baidu.com/it/u=413643897,2296924942&fm=253&fmt=auto&app=138&f=JPEG?w=800&h=500", "itemTitle": "这是商品标题", "itemSalesDesc": "这是销售描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述", "itemRankInfo": rankInfo ] as [String : Any]
+                let relationItemInfoList = [ itemInfo ]
+                let myDictionary = ["ratio": 1, "relationItemInfoList": relationItemInfoList] as [String : Any]
+                NavigationLink(destination: TestFeedCard(dictionary: myDictionary).onAppear(perform: testLog)) {
+                    Text("feed card")
                 }
             }
             .listStyle(GroupedListStyle())
@@ -69,7 +59,7 @@ struct ContentView : View {
     }
     
     func testLog() {
-        print("时间", Date().timeIntervalSince1970)
+        print("测试时间", Date().timeIntervalSince1970)
         print("时间","=======")
     }
     
@@ -129,6 +119,18 @@ struct TestView : View {
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
+    }
+}
+
+struct TestFeedCard : View {
+    var myDictionary: [String : Any] = [:]
+    
+    init(dictionary: [String : Any]) {
+        self.myDictionary = dictionary
+    }
+ 
+    var body: some View {
+        EvalView(bundleName: "feedCard", moduleName: "feedCard", entryData: self.myDictionary)
     }
 }
 
