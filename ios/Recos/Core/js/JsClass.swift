@@ -209,9 +209,9 @@ class JsObject: MemberProvider {
     func toJsStyle() -> JsStyle {
         var jsStyle = JsStyle()
 
-        let test2 = self.getValue(variable: "height") as? Int ?? 0
         let width = CGFloat(self.getValue(variable: "width") as? Int ?? 0)
         let height = CGFloat(self.getValue(variable: "height") as? Int ?? 0)
+
         jsStyle.width = width == 0 ? nil : width
         jsStyle.height = height == 0 ? nil : height
         jsStyle.lineHeight = CGFloat(self.getValue(variable: "lineHeight") as? Int ?? 0)

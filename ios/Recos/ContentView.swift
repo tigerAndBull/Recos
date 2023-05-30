@@ -7,28 +7,28 @@
 
 import Foundation
 import SwiftUI
-
-/*
- <VStack
-    name=''
-    width=''
-    data='@data:xx:xx:xx'
- >
-    
- </VStack>
- */
+import GDPerformanceView_Swift
 
 struct ContentView : View {
     
     var dataSource = DefaultRecosDataSource()
+    var dictList: Array<[String : Any]> = []
     
     init() {
-        ParseManager.shared.parse(bundleName: "viewTest")
+        var array: Array<[String : Any]> = []
+        for index in 1...1000 {
+            let rankInfo = [ "rankText": "排行榜第" + String(index), "rankUrl": "https://upload-images.jianshu.io/upload_images/5632003-7f62fae2e5b3ffbe.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" ] as [String : Any]
+            let itemInfo = ["imgUrl": "https://img1.baidu.com/it/u=413643897,2296924942&fm=253&fmt=auto&app=138&f=JPEG?w=800&h=500", "itemTitle": "这是商品标题" + String(index), "itemSalesDesc": "这是销售描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述", "itemRankInfo": rankInfo ] as [String : Any]
+            let relationItemInfoList = [ itemInfo ]
+            let myDictionary = ["ratio": 1, "relationItemInfoList": relationItemInfoList] as [String : Any]
+            array.append(myDictionary)
+        }
+        dictList = array
     }
     
     var body: some View {
         NavigationView {
-            List {
+            LazyVStack {
 //                NavigationLink(destination: EvalView(bundleName: "differentHeight", moduleName: "HelloWorld")) {
 //                    Text("ListView: have different style, can click")
 //                }
@@ -49,9 +49,24 @@ struct ContentView : View {
                 let itemInfo = ["imgUrl": "https://img1.baidu.com/it/u=413643897,2296924942&fm=253&fmt=auto&app=138&f=JPEG?w=800&h=500", "itemTitle": "这是商品标题", "itemSalesDesc": "这是销售描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述描述", "itemRankInfo": rankInfo ] as [String : Any]
                 let relationItemInfoList = [ itemInfo ]
                 let myDictionary = ["ratio": 1, "relationItemInfoList": relationItemInfoList] as [String : Any]
+                
+                NavigationLink(destination: TestImageView()) {
+                    Text("提前唤醒网络弹窗")
+                }
+                
                 NavigationLink(destination: TestFeedCard(dictionary: myDictionary).onAppear(perform: testLog)) {
                     Text("feed card")
                 }
+                .simultaneousGesture(TapGesture().onEnded {
+                    print("开始时间", Date().timeIntervalSince1970)
+                            })
+                
+                NavigationLink(destination: TestFeedCardList(dictList: self.dictList).onAppear(perform: testLog)) {
+                    Text("feed card list")
+                }
+                .simultaneousGesture(TapGesture().onEnded {
+                    print("开始时间", Date().timeIntervalSince1970)
+                            })
             }
             .listStyle(GroupedListStyle())
             .navigationBarTitle(Text("Recos"), displayMode: .large)
@@ -59,8 +74,7 @@ struct ContentView : View {
     }
     
     func testLog() {
-        print("测试时间", Date().timeIntervalSince1970)
-        print("时间","=======")
+        print("结束时间", Date().timeIntervalSince1970)
     }
     
 }
@@ -112,13 +126,19 @@ struct TestBigView : View {
 struct TestView : View {
     
     var body: some View {
-        EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test", logEnable: true)
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
         EvalView(dataSource: ParseManager.shared.getDataSouce(bundleName: "viewTest"), moduleName: "Test")
+    }
+}
+
+struct TestImageView : View {
+    
+    var body: some View {
+        AsyncImage(url: URL(string: "https://img1.baidu.com/it/u=1960110688,1786190632&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=281"))
     }
 }
 
@@ -134,12 +154,22 @@ struct TestFeedCard : View {
     }
 }
 
-struct TestLogicView : View {
+struct TestFeedCardList : View {
+    var dictList: Array<[String : Any]> = []
     
-    let myDictionary = ["name": "测试名称", "invalidTimeStamp": 100000000, "pageName": "home_page"] as [String : Any]
-    
+    init(dictList: Array<[String : Any]>) {
+        self.dictList = dictList
+    }
+ 
     var body: some View {
-        EvalView(bundleName: "testLogic", moduleName: "Test", entryData: myDictionary)
+        ScrollView {
+            LazyVStack {
+                ForEach(0..<self.dictList.count) { index in
+                    let model = self.dictList[index]
+                    EvalView(bundleName: "feedCard", moduleName: "feedCard", entryData: model)
+                }
+            }
+        }
     }
 }
 

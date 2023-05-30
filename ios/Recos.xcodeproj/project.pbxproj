@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 51;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -38,6 +38,7 @@
 		2095EAB5269D9474003F982C /* placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 2095EAB4269D9474003F982C /* placeholder.png */; };
 		2095EAB8269D9779003F982C /* differentHeight.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2095EAB6269D9779003F982C /* differentHeight.bundle */; };
 		2095EABB269D97AA003F982C /* hello.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2095EABA269D97AA003F982C /* hello.bundle */; };
+		20AF72392A0D2C04004F6BB1 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 20AF72382A0D2C04004F6BB1 /* CachedAsyncImage */; };
 		20CDD9CE26A85B4F00EE73FD /* JsClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CDD9CD26A85B4F00EE73FD /* JsClass.swift */; };
 		20CDD9D126A85E6E00EE73FD /* RecosExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20CDD9D026A85E6E00EE73FD /* RecosExtension.swift */; };
 		20D305F926AEE8BD005EC73F /* RenderElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D305F826AEE8BD005EC73F /* RenderElement.swift */; };
@@ -100,6 +101,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				532982EAC114539BA33A9E3B /* Pods_Recos.framework in Frameworks */,
+				20AF72392A0D2C04004F6BB1 /* CachedAsyncImage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,6 +280,9 @@
 			dependencies = (
 			);
 			name = Recos;
+			packageProductDependencies = (
+				20AF72382A0D2C04004F6BB1 /* CachedAsyncImage */,
+			);
 			productName = Recos;
 			productReference = 209245C3269229AD00C0DF61 /* Recos.app */;
 			productType = "com.apple.product-type.application";
@@ -306,6 +311,9 @@
 				Base,
 			);
 			mainGroup = 209245BA269229AD00C0DF61;
+			packageReferences = (
+				20AF72372A0D2C04004F6BB1 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
+			);
 			productRefGroup = 209245C4269229AD00C0DF61 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -549,9 +557,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_ASSET_PATHS = "\"Recos/Preview Content\"";
-				DEVELOPMENT_TEAM = RXC3P4W9UX;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = RXC3P4W9UX;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Recos/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -559,8 +570,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.jiangjia.kwai.anwenhutest;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiangjia.kwai.dev.merchant4;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = gif_merchant_4;
 				SWIFT_OBJC_BRIDGING_HEADER = "Recos/Recos-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -575,9 +588,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_ASSET_PATHS = "\"Recos/Preview Content\"";
-				DEVELOPMENT_TEAM = RXC3P4W9UX;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = RXC3P4W9UX;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Recos/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -585,8 +601,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.jiangjia.kwai.anwenhutest;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jiangjia.kwai.dev.merchant4;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = gif_merchant_4;
 				SWIFT_OBJC_BRIDGING_HEADER = "Recos/Recos-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -615,6 +633,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		20AF72372A0D2C04004F6BB1 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/lorenzofiamingo/swiftui-cached-async-image";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		20AF72382A0D2C04004F6BB1 /* CachedAsyncImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20AF72372A0D2C04004F6BB1 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
+			productName = CachedAsyncImage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 209245BB269229AD00C0DF61 /* Project object */;
 }

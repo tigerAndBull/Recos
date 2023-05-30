@@ -9,6 +9,7 @@
 import Foundation
 import SwiftyJSON
 import SwiftUI
+import CachedAsyncImage
 
 class JsEvaluator {
     var dataSource: RecosDataSource
@@ -129,7 +130,9 @@ class JsEvaluator {
         runNode(frame: frame, scope: frame.scope!, node: functionDecl.body)
         let ret = frame.returnValue
         if ret is RenderElement {
-            return (ret as! RenderElement).Render()
+            let render = (ret as! RenderElement).Render()
+            print("anwenhu 阶段 逻辑执行结束", NSDate().timeIntervalSince1970)
+            return render
         }
         
         return nil
@@ -204,7 +207,6 @@ class JsEvaluator {
                     let jsValue = getJsValue(obj: obj)
                     // todo
                     // if (model) {} 的逻辑解析是否符合预期
-                    //
                     if (ifStatement.test?.type == TYPE_EXPR_ID && ifStatement.alternate == nil) {
                         if ((jsValue) != nil) {
                             runNode(frame: frame, scope: ifScope, node: ifStatement.consequent!)
@@ -250,42 +252,6 @@ class JsEvaluator {
                 let it = getJsValue(obj: parseExprValue(value: item, frame: frame, scope: scope))
                 ret.push(item: it)
             }
-            if ret.list.count > 0 {
-                let execNativeMethodString = ret.get(index: 0) as? String
-                if execNativeMethodString != nil && execNativeMethodString == "ExecNativeMethod" {
-                    let callBackKey = ret.get(index: 1) as? String
-                    let className = ret.get(index: 2) as? String
-                    let methodName = ret.get(index: 3) as? String
-                    if callBackKey != nil && className != nil &&  methodName != nil {
-                        let targetClass: AnyClass = NSClassFromString(className!)!
-                        let selector = NSSelectorFromString(methodName!)
-                        if targetClass is NSObject.Type {
-                            let returnValue = (targetClass as! NSObject.Type).perform(selector).takeUnretainedValue() as? String
-                            if returnValue != nil {
-                                let returnDictionary = self.toDictionary(string: returnValue!)
-                                let dictArray = returnDictionary["result"] as? [[String : Any]]
-                                if dictArray != nil {
-                                    let jsArray = JsArray();
-                                    for itemDict in dictArray! {
-                                        let object = JsObject();
-                                        for (_, item) in itemDict.enumerated() {
-                                            object.setValue(variable: item.key, value: item.value)
-                                        }
-                                        jsArray.push(item: object)
-                                    }
-                                    let callBackVariable = scope.getVar(variable: callBackKey!) as? JsVariable
-                                    if callBackVariable != nil {
-                                        let value = (callBackVariable!).getValue() as? JsFunctionDecl
-                                        if value != nil {
-                                            normalEval(functionDecl: value!, args: [jsArray], selfValue: nil)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
             return ret
         }else if(value.type == TYPE_EXPR_BINARY) {
             return binaryCalculate(scope: scope, binaryData: value.content as! BinaryData, frame: frame)
@@ -293,6 +259,7 @@ class JsEvaluator {
             return unaryCalculate(scope: scope, unaryData: value.content as! UnaryData, frame: frame)
         }else if(value.type == TYPE_EXPR_ID){
             let name = (value.content as! IdInfo).name
+            // todo bridge切出来
             switch name {
             case "console":
                 return JsConsole()
@@ -412,11 +379,8 @@ class JsEvaluator {
                 jsObject.fields = obj as! [String : Any?]
                 jsObject.isEntryObject = true
                 return parseMember(obj: jsObject, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
-            } else {
-                return obj
             }
-            assert(false, "can not support this type")
-            return nil
+            return obj
         } else if(value.type == TYPE_EXPR_UPDATE) {
             let updateExpr = value.content as! UpdateExpr
             let argumentName = updateExpr.argument.content as! IdInfo
@@ -724,6 +688,7 @@ class JsEvaluator {
             return (leftValue as! Bool) && (rightValue as! Bool)
         case "||":
             return (leftValue as! Bool) || (rightValue as! Bool)
+            // todo 其他表达式
 //        case "&":
 //            if leftValue is Int && rightValue is Float {
 //                return (leftValue as! Int) & Int(rightValue as! Float)
@@ -793,7 +758,7 @@ struct EvalImage : View {
     }
     
     var body: some View {
-        AsyncImage(url: URL(string: self.url)).frame(width: self.width, height: self.height)
+        CachedAsyncImage(url: URL(string: self.url)).frame(width: self.width, height: self.height)
             .scaledToFill()
             .cornerRadius(self.borderRadius)
     }
@@ -807,41 +772,17 @@ struct EvalView : View {
     
     init(bundleName: String, moduleName: String, entryData: [String: Any]? = nil) {
         let defaultRecosDataSource = DefaultRecosDataSource.init()
-        print("时间a", Date().timeIntervalSince1970)
         defaultRecosDataSource.parse(bundleName: bundleName)
-        print("时间a", Date().timeIntervalSince1970)
         let function = defaultRecosDataSource.getModel(moduleName: moduleName)
         let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
         self.evaluator = jsEvaluator
         self.functionDecl = function?.toJsFunctionDeclForEntryFunc(scope: defaultRecosDataSource.rootScope, data: entryData)
     }
     
-    init(bundleName: String, moduleName: String, log: Bool) {
-        let defaultRecosDataSource = DefaultRecosDataSource.init()
-        defaultRecosDataSource.parse(bundleName: bundleName)
-        let function = defaultRecosDataSource.getModel(moduleName: moduleName)
-        let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
-        self.evaluator = jsEvaluator
-        if log {
-            print("时间", Date().timeIntervalSince1970)
-        }
-        self.functionDecl = function?.toJsFunctionDecl(scope: defaultRecosDataSource.rootScope)
-    }
-    
     init(dataSource: DefaultRecosDataSource, moduleName: String) {
         let function = dataSource.getModel(moduleName: moduleName)
         let jsEvaluator = JsEvaluator(dataSource: dataSource)
         self.evaluator = jsEvaluator
-        self.functionDecl = function?.toJsFunctionDecl(scope: dataSource.rootScope)
-    }
-    
-    init(dataSource: DefaultRecosDataSource, moduleName: String, logEnable: Bool) {
-        let function = dataSource.getModel(moduleName: moduleName)
-        let jsEvaluator = JsEvaluator(dataSource: dataSource)
-        self.evaluator = jsEvaluator
-        if logEnable {
-            print("时间", Date().timeIntervalSince1970)
-        }
         self.functionDecl = function?.toJsFunctionDecl(scope: dataSource.rootScope)
     }
     

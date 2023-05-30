@@ -5,6 +5,8 @@ target 'Recos' do
 
   use_frameworks!
 
-  pod "SwiftyJSON" 
+  pod "SwiftyJSON"
+  pod 'GDPerformanceView-Swift', '~> 2.1.1' 
+
 
 end

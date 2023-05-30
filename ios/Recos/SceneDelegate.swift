@@ -8,15 +8,18 @@
 import UIKit
 import SwiftUI
 import JavaScriptCore
+import GDPerformanceView_Swift
 
-class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+class SceneDelegate: UIResponder, UIWindowSceneDelegate, PerformanceMonitorDelegate  {
     var window: UIWindow?
-    
+
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         if let windowScene = scene as? UIWindowScene {
             let window = UIWindow(windowScene: windowScene)
             window.rootViewController = UIHostingController(rootView: ContentView())
             self.window = window
+            
+//            PerformanceMonitor.shared().delegate = self
             
 //            let context = JSContext()
 //            print("JS engine", Date().timeIntervalSince1970)
@@ -34,6 +37,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             
             window.makeKeyAndVisible()
         }
+    }
+    
+    func performanceMonitor(didReport performanceReport: PerformanceReport) {
+        print("fps", performanceReport.fps)
+        NotificationCenter.default.post(name: Notification.Name("FPS"), object: performanceReport.fps)
     }
     
     func report(mallType: Int, mallName: String) {
@@ -101,7 +109,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     func sceneDidBecomeActive(_ scene: UIScene) {
-        
+        PerformanceMonitor.shared().start()
     }
     
     func sceneWillResignActive(_ scene: UIScene) {

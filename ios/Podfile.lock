@@ -1,16 +1,20 @@
 PODS:
+  - GDPerformanceView-Swift (2.1.1)
   - SwiftyJSON (5.0.1)
 
 DEPENDENCIES:
+  - GDPerformanceView-Swift (~> 2.1.1)
   - SwiftyJSON
 
 SPEC REPOS:
   trunk:
+    - GDPerformanceView-Swift
     - SwiftyJSON
 
 SPEC CHECKSUMS:
+  GDPerformanceView-Swift: 22d964fe40b19e3d914dba2586237d064de8fd77
   SwiftyJSON: 2f33a42c6fbc52764d96f13368585094bfd8aa5e
 
-PODFILE CHECKSUM: 6f9882ff64ae3efba99093e06066546dac94b72c
+PODFILE CHECKSUM: 583661bafccb76f330be07777a04af31790f18ab
 
-COCOAPODS: 1.10.1
+COCOAPODS: 1.11.3

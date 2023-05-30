@@ -27,6 +27,23 @@ class DummyRecosDataSource: RecosDataSource {
     }
 }
 
+class BundleNodesManager {
+    
+    static let shared = BundleNodesManager()
+    
+    private init() {}
+    
+    private var cachedBundleNodes: [String : [Node]] = [:]
+    
+    public func cachedParseNodes(bundleName: String, nodes: [Node]) {
+        self.cachedBundleNodes[bundleName] = nodes
+    }
+    
+    public func getParseNodes(bundleName: String) -> [Node]? {
+        return self.cachedBundleNodes[bundleName]
+    }
+}
+
 class DefaultRecosDataSource: RecosDataSource {
     private var waitingChannel: NSMutableDictionary? = nil
     private var loadedBundle: [String]?
@@ -34,6 +51,8 @@ class DefaultRecosDataSource: RecosDataSource {
     private var dummyJsEvaluator: JsEvaluator?
     private var globalStackFrame: JsStackFrame?
     var rootScope: JsScope?
+    
+    private var cachedBundleNodes: [String : Any] = [:]
     
     init() {
         self.waitingChannel = NSMutableDictionary()
@@ -45,12 +64,24 @@ class DefaultRecosDataSource: RecosDataSource {
     }
     
     func parse(bundleName: String) {
-        let text: String = bundleProvider.getBundleContent(bundleName: bundleName)
+        let nodes = BundleNodesManager.shared.getParseNodes(bundleName: bundleName)
+        if let nodes = nodes {
+            for node in nodes {
+                self.dummyJsEvaluator?.runNode(frame: globalStackFrame!, scope: rootScope!, node: node)
+            }
+            return
+        }
         
+        print("anwenhu 阶段 读取bundle转string 开始", Date().timeIntervalSince1970)
+        let text: String = bundleProvider.getBundleContent(bundleName: bundleName)
+        print("anwenhu 阶段 读取bundle转string 结束", Date().timeIntervalSince1970)
+        
+        print("anwenhu 阶段 string转json 开始", Date().timeIntervalSince1970)
         if let data = text.data(using: .utf8) {
             do {
                 let jsonObject = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
                 let json = JSON(jsonObject)
+                print("anwenhu 阶段 string转json 结束", Date().timeIntervalSince1970)
                 var nodes = [Node]()
                 for (_, item):(String, JSON) in json {
                     let node = Node(json: item)
@@ -58,9 +89,12 @@ class DefaultRecosDataSource: RecosDataSource {
                         nodes.append(node!)
                     }
                 }
+                print("anwenhu 阶段 json转node 转换", Date().timeIntervalSince1970)
                 for node in nodes {
                     self.dummyJsEvaluator?.runNode(frame: globalStackFrame!, scope: rootScope!, node: node)
                 }
+                BundleNodesManager.shared.cachedParseNodes(bundleName: bundleName, nodes: nodes)
+                print("anwenhu 阶段 json转node 结束", Date().timeIntervalSince1970)
             } catch {
                 print(String(format: "Recos can not parse the bundle named %@", bundleName))
             }

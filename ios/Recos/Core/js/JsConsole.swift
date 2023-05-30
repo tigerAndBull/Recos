@@ -16,9 +16,6 @@ class JsConsole : MemberProvider {
                         print(arg)
                     }
                 }
-//                if (args?[0] as? String ?? "").contains("进入") {
-//                    print("aaaa")
-//                }
                 // todo 临时写
 //                print("引擎日志", (args?[0]! as? String ?? ""), Date().timeIntervalSince1970)
                 return nil
