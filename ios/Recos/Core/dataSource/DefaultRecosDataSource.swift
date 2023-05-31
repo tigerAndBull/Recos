@@ -64,19 +64,19 @@ class DefaultRecosDataSource: RecosDataSource {
     }
     
     func parse(bundleName: String) {
-//        let nodes = BundleNodesManager.shared.getParseNodes(bundleName: bundleName)
-//        if let nodes = nodes {
-//            for node in nodes {
-//                self.dummyJsEvaluator?.runNode(frame: globalStackFrame!, scope: rootScope!, node: node)
-//            }
-//            return
-//        }
+        let nodes = BundleNodesManager.shared.getParseNodes(bundleName: bundleName)
+        if let nodes = nodes {
+            for node in nodes {
+                self.dummyJsEvaluator?.runNode(frame: globalStackFrame!, scope: rootScope!, node: node)
+            }
+            return
+        }
         var startDate = Date().timeIntervalSince1970
         var endDate = 0.0
         print("anwenhu 阶段 读取bundle转string 开始", startDate)
         let text: String = bundleProvider.getBundleContent(bundleName: bundleName)
         endDate = Date().timeIntervalSince1970
-        print("anwenhu 阶段 读取bundle转string 结束", endDate, endDate - startDate)
+        print("anwenhu 阶段 读取bundle转string 结束", endDate, "阶段耗时", endDate - startDate)
         
         startDate = endDate
         print("anwenhu 阶段 string转json 开始", startDate)
@@ -84,14 +84,14 @@ class DefaultRecosDataSource: RecosDataSource {
             do {
                 let jsons = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
                 endDate = Date().timeIntervalSince1970
-                print("anwenhu 阶段 string转json 结束", endDate, endDate - startDate)
+                print("anwenhu 阶段 string转json 结束", endDate, "阶段耗时", endDate - startDate)
                 for json in jsons as! [[String : Any]] {
                     self.dummyJsEvaluator?.runNode(frame: globalStackFrame!, scope: rootScope!, node: json)
                 }
-//                BundleNodesManager.shared.cachedParseNodes(bundleName: bundleName, nodes: jsons)
+                BundleNodesManager.shared.cachedParseNodes(bundleName: bundleName, nodes: jsons as! [[String : Any]])
                 startDate = endDate
                 endDate = Date().timeIntervalSince1970
-                print("anwenhu 阶段 runNode 结束", endDate, endDate - startDate)
+                print("anwenhu 阶段 runNode 结束", endDate, "阶段耗时", endDate - startDate)
             } catch {
                 print(String(format: "Recos can not parse the bundle named %@", bundleName))
             }

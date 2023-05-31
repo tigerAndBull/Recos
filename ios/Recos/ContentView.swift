@@ -58,14 +58,14 @@ struct ContentView : View {
                     Text("feed card")
                 }
                 .simultaneousGesture(TapGesture().onEnded {
-                    print("开始时间", Date().timeIntervalSince1970)
+//                    print("开始时间", Date().timeIntervalSince1970)
                             })
                 
                 NavigationLink(destination: TestFeedCardList(dictList: self.dictList).onAppear(perform: testLog)) {
                     Text("feed card list")
                 }
                 .simultaneousGesture(TapGesture().onEnded {
-                    print("开始时间", Date().timeIntervalSince1970)
+//                    print("开始时间", Date().timeIntervalSince1970)
                             })
             }
             .listStyle(GroupedListStyle())
