@@ -11,6 +11,6 @@ import SwiftyJSON
 
 public protocol RecosDataSource {
     func parse(bundleName: String) -> Void
-    func getModel(moduleName: String) -> JSON?
-    func getExitModule(moduleName: String) -> JSON?
+    func getModel(moduleName: String) -> [String : Any]?
+    func getExitModule(moduleName: String) -> [String : Any]?
 }

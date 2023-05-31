@@ -63,7 +63,7 @@ class JsStackFrame {
 
 class JsScope {
     var varList: [String : Any] = [:]
-    var functionList: [String : JSON] = [:]
+    var functionList: [String : [String : Any]] = [:]
     var parentScope: JsScope?
     var extraVarList: [String : Any] = [:]
     
@@ -130,23 +130,23 @@ class JsScope {
         return headScope?.extraVarList[name]
     }
     
-    func addFunction(functionDecl: JSON) {
-        functionList[functionDecl["name"].string!] = functionDecl
+    func addFunction(functionDecl: [String : Any]) {
+        functionList[functionDecl["name"] as! String] = functionDecl
     }
     
-    func getFunction(name: String) -> JSON? {
+    func getFunction(name: String) -> [String : Any]? {
         return functionList[name] ?? parentScope?.getFunction(name: name)
     }
 }
 
 public class JsFunctionDecl {
     var name: String
-    var param: [JSON]
-    var body: JSON
+    var param: [[String : Any]]
+    var body: [String : Any]
     var parentScope: JsScope? = nil
     var isRecosComponent: Bool = false
     
-    init(name: String, param: [JSON], body: JSON, parentScope: JsScope? = nil, isRecosComponent: Bool = false) {
+    init(name: String, param: [[String : Any]], body: [String : Any], parentScope: JsScope? = nil, isRecosComponent: Bool = false) {
         self.name = name
         self.param = param
         self.body = body

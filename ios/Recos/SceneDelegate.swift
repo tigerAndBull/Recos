@@ -109,7 +109,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate, PerformanceMonitorDeleg
     }
     
     func sceneDidBecomeActive(_ scene: UIScene) {
-//        PerformanceMonitor.shared().start()
+        PerformanceMonitor.shared().start()
     }
     
     func sceneWillResignActive(_ scene: UIScene) {
