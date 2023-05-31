@@ -347,6 +347,7 @@ function feedCard(feed: Model) {
     let images = feed.relationItemInfoList;
     let coverUrl = '';
     if (images) {
+        console.log('mmmmmmmm');
         let imageUrl = images[0].imgUrl;
         if (imageUrl.length > 0) {
             coverUrl = imageUrl;

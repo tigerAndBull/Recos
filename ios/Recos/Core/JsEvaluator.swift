@@ -19,12 +19,12 @@ class JsEvaluator {
         self.dataSource = dataSource
     }
     
-    func getArgs(nodes: [Node], index: Int) -> [String : Any]? {
+    func getArgs(nodes: [JSON], index: Int) -> [String : Any]? {
         var result: [String : Any] = [:]
         nodes.forEach { node in
-            if node.type == TYPE_EXPR_ID {
-                let name = (node.content as! IdInfo).name
-                result[name] = index
+            if node["type"].int == TYPE_EXPR_ID {
+                let name = node["content"]["name"].string
+                result[name!] = index
             }
         }
         return result
@@ -46,8 +46,8 @@ class JsEvaluator {
         let frame = JsStackFrame(parentScope: (functionDecl.parentScope != nil) ? functionDecl.parentScope! : rootScope)
         
         for (index, node) in functionDecl.param.enumerated() {
-            let idInfo = node.content as! IdInfo
-            frame.scope?.addVar(variable: JsVariable(name: idInfo.name, kind: VariableKind.VAR, value: args?[index]))
+            let idInfo = node["content"]
+            frame.scope?.addVar(variable: JsVariable(name: idInfo["name"].string!, kind: VariableKind.VAR, value: args?[index]))
         }
         
         frame.scope?.addVar(variable: JsVariable(name: "this", kind: VariableKind.VAR, value: self))
@@ -66,8 +66,8 @@ class JsEvaluator {
         let frame = JsStackFrame(parentScope: (functionDecl.parentScope != nil) ? functionDecl.parentScope! : rootScope)
         
         for (index, node) in functionDecl.param.enumerated() {
-            let idInfo = node.content as! IdInfo
-            let variable = JsVariable(name: idInfo.name, kind: VariableKind.VAR, value: args?[index])
+            let idInfo = node["content"]
+            let variable = JsVariable(name: idInfo["name"].string!, kind: VariableKind.VAR, value: args?[index])
             frame.scope?.addVar(variable: variable)
         }
         
@@ -102,7 +102,7 @@ class JsEvaluator {
                 frame.scope?.removeExtraVar(name: needUpdateVariable!.name)
             }
         }
-
+        
         frame.visitAndGetCallback = {(defaultValue: JsFunctionDecl) -> JsFunctionDecl in
             currentCallbackIndex += 1
             if callBack.count > currentCallbackIndex {
@@ -140,34 +140,23 @@ class JsEvaluator {
     
     func runNode(frame: JsStackFrame,
                  scope: JsScope,
-                 node: Node) {
+                 node: JSON) {
         
         if (frame.returnValue is NSNull) == false {
             return
         }
         
-        switch node.type {
-            case TYPE_DECL_VAR_LIST:
-                let nodeArray = node.content as! [Node]
-                for item in nodeArray {
-                    if item.type == TYPE_DECL_VAR {
-                        let varItem = item.content as! ValDecl
-                        let kind = VariableKind.init(rawValue: varItem.kind)
-                        let value = parseExprValue(value: varItem.initNode, frame: frame, scope: scope)
+        switch node["type"].int {
+        case TYPE_DECL_VAR_LIST:
+            for (_, item):(String, JSON) in node["content"] {
+                if item["type"].int == TYPE_DECL_VAR {
+                    let varItem = item["content"]
+                    if let kindString = varItem["kind"].string {
+                        let kind = VariableKind.init(rawValue: kindString)
+                        let value = parseExprValue(value: varItem["init"], frame: frame, scope: scope)
                         let initValue = getJsValue(obj: value)
-                        let variable = JsVariable(name: varItem.name, kind: kind!, value: initValue)
-                        if kind == VariableKind.VAR {
-                            frame.scope?.addVar(variable: variable)
-                        } else {
-                            scope.addVar(variable: variable)
-                        }
-                    } else if item.type == TYPE_DECL_VAR_ARRAY_PATTERN {
-                        let varList = item.content as! ArrayPatternValDecl
-                        let value = parseExprValue(value: varList.initNode, frame: frame, scope: scope)
-                        let initValue = getJsValue(obj: value)
-                        let kind = VariableKind.init(rawValue: varList.kind)
-                        for (index, name) in varList.nameList.enumerated() {
-                            let variable = JsVariable(name: name, kind: kind!, value: (initValue as! JsArray).get(index: index))
+                        if let nameString = varItem["name"].string {
+                            let variable = JsVariable(name: nameString, kind: kind!, value: initValue)
                             if kind == VariableKind.VAR {
                                 frame.scope?.addVar(variable: variable)
                             } else {
@@ -175,90 +164,126 @@ class JsEvaluator {
                             }
                         }
                     }
-                }
-                break
-            case TYPE_DECL_FUNC:
-                scope.addFunction(functionDecl: node.content as! FunctionDecl)
-                break
-            case TYPE_STATEMENT_BLOCK:
-                let nodeArray = node.content as! [Node]
-                let blockScope = JsScope(parentScope: scope)
-                for item in nodeArray {
-                    runNode(frame: frame, scope: blockScope, node: item)
-                }
-                break
-            case TYPE_STATEMENT_FOR:
-                let forStatement = node.content as! ForStatement
-                let forScope = JsScope(parentScope: scope)
-                runNode(frame: frame, scope: forScope, node: forStatement.initNode)
-                while getJsValue(obj: parseExprValue(value: forStatement.test, frame: frame, scope: forScope)) as? Bool == true {
-                    runNode(frame: frame, scope: forScope, node: forStatement.body)
-                    runNode(frame: frame, scope: forScope, node: forStatement.update)
-                }
-                break
-            case TYPE_EXPR_UPDATE:
-                parseExprValue(value: node, frame: frame, scope: scope)
-                break
-            case TYPE_STATEMENT_IF:
-                let ifStatement = node.content as! IfStatement
-                let ifScope = JsScope(parentScope: scope)
-                if ifStatement.test != nil {
-                    let obj = parseExprValue(value: ifStatement.test!, frame: frame, scope: ifScope)
-                    let jsValue = getJsValue(obj: obj)
-                    // todo
-                    // if (model) {} 的逻辑解析是否符合预期
-                    if (ifStatement.test?.type == TYPE_EXPR_ID && ifStatement.alternate == nil) {
-                        if ((jsValue) != nil) {
-                            runNode(frame: frame, scope: ifScope, node: ifStatement.consequent!)
-                        }
-                    }
-                    if jsValue as? Bool == true {
-                        runNode(frame: frame, scope: ifScope, node: ifStatement.consequent!)
-                    } else {
-                        if ifStatement.alternate != nil {
-                            runNode(frame: frame, scope: ifScope, node: ifStatement.alternate!)
+                } else if item["type"].int == TYPE_DECL_VAR_ARRAY_PATTERN {
+                    let varList = item["content"]
+                    let value = parseExprValue(value: varList["init"], frame: frame, scope: scope)
+                    let initValue = getJsValue(obj: value)
+                    if let kindString = varList["kind"].string {
+                        let kind = VariableKind.init(rawValue: kindString)
+                        var index = 0
+                        for (_, name):(String, JSON) in item["nameList"] {
+                            let variable = JsVariable(name: name.string!, kind: kind!, value: (initValue as! JsArray).get(index: index))
+                            if kind == VariableKind.VAR {
+                                frame.scope?.addVar(variable: variable)
+                            } else {
+                                scope.addVar(variable: variable)
+                            }
+                            index += 1
                         }
                     }
                 }
-                break
-            case TYPE_STATEMENT_RETURN:
-                let arg = node.content as! Node
-                frame.returnValue = getJsValue(obj: parseExprValue(value: arg, frame: frame, scope: scope))
-                break
-            case TYPE_STATEMENT_EXPR:
-                parseExprValue(value: node.content as! Node, frame: frame, scope: scope)
-                break
-            default:
-                break
             }
+            break
+        case TYPE_DECL_FUNC:
+            scope.addFunction(functionDecl: node["content"])
+            break
+        case TYPE_STATEMENT_BLOCK:
+            let blockScope = JsScope(parentScope: scope)
+            for (_, item):(String, JSON) in node["content"] {
+                runNode(frame: frame, scope: blockScope, node: item)
+            }
+            break
+        case TYPE_STATEMENT_FOR:
+            let forScope = JsScope(parentScope: scope)
+            let forStatement = node["content"]
+            runNode(frame: frame, scope: forScope, node: forStatement["init"])
+            while getJsValue(obj: parseExprValue(value: forStatement["test"], frame: frame, scope: forScope)) as? Bool == true {
+                runNode(frame: frame, scope: forScope, node: forStatement["body"])
+                runNode(frame: frame, scope: forScope, node: forStatement["update"])
+            }
+            break
+        case TYPE_EXPR_UPDATE:
+            parseExprValue(value: node, frame: frame, scope: scope)
+            break
+        case TYPE_STATEMENT_IF:
+            let ifScope = JsScope(parentScope: scope)
+            let ifStatement = node["content"]
+            if ifStatement["test"] != JSON.null {
+                let test = ifStatement["test"]
+                let obj = parseExprValue(value: test, frame: frame, scope: ifScope)
+                let jsValue = getJsValue(obj: obj)
+                // todo
+                // if (model) {} 的逻辑解析是否符合预期
+                if (test["type"].int == TYPE_EXPR_ID && ifStatement["alternate"] == JSON.null) {
+                    if ((jsValue) != nil) {
+                        runNode(frame: frame, scope: ifScope, node: ifStatement["consequent"])
+                    }
+                }
+                if jsValue as? Bool == true {
+                    runNode(frame: frame, scope: ifScope, node: ifStatement["consequent"])
+                } else {
+                    if ifStatement["alternate"] != JSON.null {
+                        runNode(frame: frame, scope: ifScope, node: ifStatement["alternate"])
+                    }
+                }
+            }
+            break
+        case TYPE_STATEMENT_RETURN:
+            let arg = node["content"]
+            frame.returnValue = getJsValue(obj: parseExprValue(value: arg, frame: frame, scope: scope))
+            break
+        case TYPE_STATEMENT_EXPR:
+            parseExprValue(value: node["content"], frame: frame, scope: scope)
+            break
+        default:
+            break
+        }
+    }
+    
+    func toJSFunctionDecl(scope: JsScope, funcJSON: JSON, type: Int) -> JsFunctionDecl {
+        var params = [JSON]()
+        for (_, item):(String, JSON) in funcJSON["params"] {
+            params.append(item)
+        }
+        if type == TYPE_EXPR_ARRAY_FUNCTION {
+            return JsFunctionDecl(name: "FunctionArrayExpr", param: params, body: funcJSON["body"], parentScope: scope, isRecosComponent: false)
+        }
+        return JsFunctionDecl(name: "FunctionExpr", param: params, body: funcJSON["body"], parentScope: scope, isRecosComponent: false)
     }
     
     @discardableResult
-    func parseExprValue(value: Node, frame: JsStackFrame, scope: JsScope) -> Any? {
+    func parseExprValue(value: JSON, frame: JsStackFrame, scope: JsScope) -> Any? {
 
-        if value.type == TYPE_LITERAL_STR {
-            return (value.content as! StringLiteral).value
-        }else if(value.type == TYPE_LITERAL_NUM) {
-            let value = (value.content as! NumLiteral).value
+        if value == JSON.null {
+            return nil
+        }
+        
+        let content = value["content"]
+        let type = value["type"].int ?? 0
+
+        if type == TYPE_LITERAL_STR {
+            return content["value"].string
+        }else if(type == TYPE_LITERAL_NUM) {
+            let value = content["value"].int
             return value
-        }else if(value.type == TYPE_EXPR_FUNCTION){
-            return (value.content as! FunctionExpr).toJsFunctionDecl(scope: scope)
-        }else if(value.type == TYPE_EXPR_ARRAY_FUNCTION) {
-            return (value.content as! FunctionArrayExpr).toJsFunctionDecl(scope: scope)
-        }else if(value.type == TYPE_EXPR_ARRAY) {
+        }else if(type == TYPE_EXPR_FUNCTION) {
+            return toJSFunctionDecl(scope: scope, funcJSON: content, type: type)
+        }else if(type == TYPE_EXPR_ARRAY_FUNCTION) {
+            return toJSFunctionDecl(scope: scope, funcJSON: content, type: type)
+        }else if(type == TYPE_EXPR_ARRAY) {
             let ret = JsArray()
-            let nodeArray = value.content as! [Node]
-            for item in nodeArray {
+            let nodeArray = content
+            for (_, item):(String, JSON) in nodeArray {
                 let it = getJsValue(obj: parseExprValue(value: item, frame: frame, scope: scope))
                 ret.push(item: it)
             }
             return ret
-        }else if(value.type == TYPE_EXPR_BINARY) {
-            return binaryCalculate(scope: scope, binaryData: value.content as! BinaryData, frame: frame)
-        }else if(value.type == TYPE_EXPR_UNARY) {
-            return unaryCalculate(scope: scope, unaryData: value.content as! UnaryData, frame: frame)
-        }else if(value.type == TYPE_EXPR_ID){
-            let name = (value.content as! IdInfo).name
+        }else if(type == TYPE_EXPR_BINARY) {
+            return binaryCalculate(scope: scope, binaryData: content, frame: frame)
+        }else if(type == TYPE_EXPR_UNARY) {
+            return unaryCalculate(scope: scope, unaryData: content, frame: frame)
+        }else if(type == TYPE_EXPR_ID){
+            let name = content["name"].string!
             // todo bridge切出来
             switch name {
             case "console":
@@ -300,39 +325,44 @@ class JsEvaluator {
                     return variable
                 }
                 
-                return scope.getFunction(name: name)?.toJsFunctionDecl(scope: scope)
+                if let funcJSON = scope.getFunction(name: name) {
+                    return toJSFunctionDecl(scope: scope, funcJSON: funcJSON, type: type)
+                }
+                
+                return nil
             }
-        } else if(value.type == TYPE_EXPR_OBJECT) {
-            let properties = value.content as! [ObjectProperty]
+        } else if(type == TYPE_EXPR_OBJECT) {
             let obj = JsObject()
-            properties.forEach { property in
+            for (_, property):(String, JSON) in content {
                 var key: Any?
-                if property.computed {
-                    key = getJsValue(obj: parseExprValue(value: property.key, frame: frame, scope: scope))
+                let keyNode = property["key"]
+                if property["computed"].boolValue {
+                    key = getJsValue(obj: parseExprValue(value: keyNode, frame: frame, scope: scope))
                 } else {
-                    if property.key.type == TYPE_EXPR_ID {
-                        let idInfo = property.key.content as! IdInfo
-                        key = idInfo.name
-                    } else if property.key.type == TYPE_LITERAL_STR {
-                        let stringLiteral = property.key.content as! StringLiteral
-                        key = stringLiteral.value
-                    } else if property.key.type == TYPE_LITERAL_NUM {
-                        let numLiteral = property.key.content as! NumLiteral
-                        key = numLiteral.value
+                    let keyNodeType = keyNode["type"].int
+                    if keyNodeType == TYPE_EXPR_ID {
+                        let idInfo = keyNode["content"]
+                        key = idInfo["name"].string
+                    } else if keyNodeType == TYPE_LITERAL_STR {
+                        let stringLiteral = keyNode["content"]
+                        key = stringLiteral["value"].string
+                    } else if keyNodeType == TYPE_LITERAL_NUM {
+                        let numLiteral = keyNode["content"]
+                        key = numLiteral["value"].int
                     }
                 }
-                let pValue = getJsValue(obj: parseExprValue(value: property.value, frame: frame, scope: scope))
+                let pValue = getJsValue(obj: parseExprValue(value: property["value"], frame: frame, scope: scope))
                 if (key != nil) {
                     obj.setValue(variable: key as! String, value: pValue)
                 }
             }
             return obj
-        } else if(value.type == TYPE_EXPR_CALL) {
-            let callExpr = value.content as! CallExpr
-            let callee = getJsValue(obj: parseExprValue(value: callExpr.callee, frame: frame, scope: scope))
+        } else if(type == TYPE_EXPR_CALL) {
+            let callExpr = content
+            let callee = getJsValue(obj: parseExprValue(value: callExpr["callee"], frame: frame, scope: scope))
 
             var arguments = [Any?]()
-            callExpr.arguments.forEach { item in
+            for (_, item):(String, JSON) in callExpr["arguments"] {
                 arguments.append(getJsValue(obj: parseExprValue(value: item, frame: frame, scope: scope)))
             }
             
@@ -357,34 +387,37 @@ class JsEvaluator {
             }
             return callee
             
-        } else if(value.type == TYPE_EXPR_MEMBER) {
-            let memberExpr = value.content as! MemeberExpr
-            let exprValue = parseExprValue(value: memberExpr.obj, frame: frame, scope: scope)
+        } else if(type == TYPE_EXPR_MEMBER) {
+            let memberExpr = content
+            let exprValue = parseExprValue(value: memberExpr["object"], frame: frame, scope: scope)
             let obj = getJsValue(obj: exprValue)
+            let computed = memberExpr["computed"].boolValue
+            let property = memberExpr["property"]
             if obj is MemberProvider {
-                return parseMember(obj: obj as! MemberProvider, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
+                return parseMember(obj: obj as! MemberProvider, computed: computed, value: property, scope: scope, frame: frame)
             } else if obj is JsVariable {
                 let object = obj as! JsVariable
                 let targetArray = JsArray()
                 targetArray.push(item: object)
                 targetArray.memberSetter(name: "0")(object)
-                return parseMember(obj: targetArray, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
+                return parseMember(obj: targetArray, computed: computed, value: property, scope: scope, frame: frame)
             } else if obj is Array<Any> {
                 let targetArray = JsArray()
                 targetArray.list = obj as! Array<Any>
 //                targetArray.memberSetter(name: "0")(obj)
-                return parseMember(obj: targetArray, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
+                return parseMember(obj: targetArray, computed: computed, value: property, scope: scope, frame: frame)
             } else if obj is [String : Any?] {
                 let jsObject = JsObject()
                 jsObject.fields = obj as! [String : Any?]
                 jsObject.isEntryObject = true
-                return parseMember(obj: jsObject, computed: memberExpr.computed, value: memberExpr.property, scope: scope, frame: frame)
+                return parseMember(obj: jsObject, computed: computed, value: property, scope: scope, frame: frame)
             }
             return obj
-        } else if(value.type == TYPE_EXPR_UPDATE) {
-            let updateExpr = value.content as! UpdateExpr
-            let argumentName = updateExpr.argument.content as! IdInfo
-            let variable = scope.getVar(variable: argumentName.name) as! JsVariable
+        } else if(type == TYPE_EXPR_UPDATE) {
+            let updateExpr = content
+            let argument = updateExpr["argument"]
+            let argumentName = argument["content"]
+            let variable = scope.getVar(variable: argumentName["name"].string!) as! JsVariable
             let cv = variable.getValue()
             var intCV = Int(0)
             if cv is Float {
@@ -394,25 +427,25 @@ class JsEvaluator {
             }
             let currentValue: Int = intCV
             var nextValue: Int = currentValue
-            switch updateExpr.operatorString {
-            case "++":
-                nextValue += 1
-            case "--":
-                nextValue -= 1
-            default:
-                nextValue += 1
+            switch updateExpr["operator"].string {
+                case "++":
+                    nextValue += 1
+                case "--":
+                    nextValue -= 1
+                default:
+                    nextValue += 1
             }
             variable.updateValue(value: nextValue)
-            if updateExpr.prefix {
+            if updateExpr["prefix"].boolValue {
                 return Float(nextValue)
             } else {
                 return Float(currentValue)
             }
-        } else if(value.type == TYPE_EXPR_ASSIGN) {
-            let assignExpr = value.content as! AssignExpr
-            let rightValue = getJsValue(obj: parseExprValue(value: assignExpr.right, frame: frame, scope: scope))
-            let leftValue = parseExprValue(value: assignExpr.left, frame: frame, scope: scope)
-            if assignExpr.operatorString == "=" {
+        } else if(type == TYPE_EXPR_ASSIGN) {
+            let assignExpr = content
+            let rightValue = getJsValue(obj: parseExprValue(value: assignExpr["right"], frame: frame, scope: scope))
+            let leftValue = parseExprValue(value: assignExpr["left"], frame: frame, scope: scope)
+            if assignExpr["operator"].string == "=" {
                 if leftValue is JsVariable {
                     let leftValue = leftValue as! JsVariable
                     leftValue.updateValue(value: rightValue)
@@ -422,42 +455,42 @@ class JsEvaluator {
                 }
             }
             return rightValue
-        } else if(value.type == TYPE_EXPR_EXPRESSION) {
-            let sequenceExpr = value.content as! SequenceExpr
+        } else if(type == TYPE_EXPR_EXPRESSION) {
+            let sequenceExpr = content
             let jsObject = JsObject()
             
-            for it in sequenceExpr.expressions {
+            for (_, it):(String, JSON) in sequenceExpr["expression"] {
                 let value = parseExprValue(value: it, frame: frame, scope: scope) as! JsObject
                 value.fields.forEach { it in
                     jsObject.setValue(variable: it.key, value: it.value)
                 }
             }
             return jsObject
-        } else if(value.type == TYPE_JSX_ELEMENT) {
-            let jsxElement = value.content as! JsxElement
+        } else if(type == TYPE_JSX_ELEMENT) {
+            let jsxElement = content
             var props = [String : Any?]()
-            jsxElement.props.forEach { prop in
-                props[prop.name] = getJsValue(obj: parseExprValue(value: prop.value!, frame: frame, scope: scope))
+            for (_, prop):(String, JSON) in jsxElement["prop"] {
+                props[prop["name"].string!] = getJsValue(obj: parseExprValue(value: prop["value"], frame: frame, scope: scope))
             }
             var elementArray = [RenderElement]()
-            jsxElement.children.forEach { node in
-                switch node.type {
+            for (_, node):(String, JSON) in jsxElement["children"] {
+                switch node["type"].int {
                     case TYPE_JSX_ELEMENT:
                         elementArray.append(parseExprValue(value: node, frame: frame, scope: scope) as! RenderElement)
                         break
                     case TYPE_JSX_TEXT:
-                        elementArray.append(JsxValueRenderElement(value: node.content as! JsxText))
+                        elementArray.append(JsxValueRenderElement(value: node["content"]))
                         break
                     default:
                         elementArray.append(JsxValueRenderElement(value: getJsValue(obj:parseExprValue(value: node, frame: frame, scope: scope))))
                 }
             }
-            return JsxRenderElement(jsEvaluator: self, name: jsxElement.name, props: props as [String : Any], children: elementArray)
+            return JsxRenderElement(jsEvaluator: self, name: jsxElement["name"].string!, props: props as [String : Any], children: elementArray)
         }
         assert(false, "can not support this type")
     }
     
-    func parseMember(obj: MemberProvider, computed: Bool, value: Node, scope: JsScope, frame: JsStackFrame) -> JsMember? {
+    func parseMember(obj: MemberProvider, computed: Bool, value: JSON, scope: JsScope, frame: JsStackFrame) -> JsMember? {
         if computed {
             let result = parseExprValue(value: value, frame: frame, scope: scope)
             let name = getJsValue(obj: result)
@@ -470,9 +503,11 @@ class JsEvaluator {
                 }
                 return JsMember(obj: obj, name: string)
             }
-        } else if value.type == TYPE_EXPR_ID {
-            let idInfo = value.content as! IdInfo
-            return JsMember(obj: obj, name: idInfo.name)
+        } else if value["type"].int == TYPE_EXPR_ID {
+            let idInfo = value["content"]
+            if let nameString = idInfo["name"].string {
+                return JsMember(obj: obj, name: nameString)
+            }
         }
         return nil
     }
@@ -497,23 +532,24 @@ class JsEvaluator {
         return result
     }
     
-    func unaryCalculate(scope: JsScope, unaryData: UnaryData, frame: JsStackFrame) -> Any? {
-        switch unaryData.operatorString {
+    func unaryCalculate(scope: JsScope, unaryData: JSON, frame: JsStackFrame) -> Any? {
+        switch unaryData["operator"].string {
         case "!":
-            let obj = parseExprValue(value: unaryData.argument, frame: frame, scope: scope)
+            let obj = parseExprValue(value: unaryData["argument"], frame: frame, scope: scope)
             return ((getJsValue(obj: obj) != nil) != true)
         default:
             return nil
         }
     }
     
-    func binaryCalculate(scope: JsScope, binaryData: BinaryData, frame: JsStackFrame) -> Any? {
-        var leftValue = getJsValue(obj: parseExprValue(value: binaryData.left, frame: frame, scope: scope))
+    func binaryCalculate(scope: JsScope, binaryData: JSON, frame: JsStackFrame) -> Any? {
+        var leftValue = getJsValue(obj: parseExprValue(value: binaryData["left"], frame: frame, scope: scope))
         var rightValue: Any?
-        if binaryData.right != nil {
-            rightValue = getJsValue(obj: parseExprValue(value: binaryData.right!, frame: frame, scope: scope))
+        if binaryData["right"] != JSON.null {
+            rightValue = getJsValue(obj: parseExprValue(value: binaryData["right"], frame: frame, scope: scope))
         }
-        switch binaryData.operatorString {
+        let operatorString = binaryData["operator"].string!
+        switch operatorString {
         case "+":
             if leftValue is String && rightValue is String {
                 return (leftValue as! String) + (rightValue as! String)
@@ -647,6 +683,10 @@ class JsEvaluator {
             }
             return Float(leftValue as! Int) <= (rightValue as! Float)
         case "==":
+            if leftValue == nil && rightValue == nil {
+                print("命中========")
+                return false
+            }
             if let _ = leftValue,
                rightValue == nil {
                 return false
@@ -708,7 +748,7 @@ class JsEvaluator {
 ////            return leftUsed ^ rightUsed
 //            return 0
         default:
-            assert(false, "not support" + binaryData.operatorString)
+            assert(false, "not support" + operatorString)
         }
     }
     
@@ -776,20 +816,49 @@ struct EvalView : View {
         let function = defaultRecosDataSource.getModel(moduleName: moduleName)
         let jsEvaluator = JsEvaluator(dataSource: defaultRecosDataSource)
         self.evaluator = jsEvaluator
-        self.functionDecl = function?.toJsFunctionDeclForEntryFunc(scope: defaultRecosDataSource.rootScope, data: entryData)
+        self.functionDecl = self.toJsFunctionDeclForEntryFunc(scope: defaultRecosDataSource.rootScope, funcJSON: function!, data: entryData)
     }
     
     init(dataSource: DefaultRecosDataSource, moduleName: String) {
         let function = dataSource.getModel(moduleName: moduleName)
         let jsEvaluator = JsEvaluator(dataSource: dataSource)
         self.evaluator = jsEvaluator
-        self.functionDecl = function?.toJsFunctionDecl(scope: dataSource.rootScope)
+        self.functionDecl = self.toJsFunctionDecl(scope: dataSource.rootScope, funcJSON: function!)
     }
     
     init(functionDecl: JsFunctionDecl, args: [Any]?, evaluator: JsEvaluator) {
         self.functionDecl = functionDecl
         self.args = args
         self.evaluator = evaluator
+    }
+    
+    func toJsFunctionDecl(scope: JsScope? = nil, funcJSON: JSON) -> JsFunctionDecl {
+        var params = [JSON]()
+        for (_, item):(String, JSON) in funcJSON["param"] {
+            params.append(item)
+        }
+        return JsFunctionDecl(name: funcJSON["name"].string!, param: params, body: funcJSON["body"], parentScope: scope, isRecosComponent: false)
+    }
+    
+    func toJsFunctionDeclForEntryFunc(scope: JsScope? = nil, funcJSON: JSON, data: [String : Any]? = nil) -> JsFunctionDecl {
+        var params = [JSON]()
+        for (_, item):(String, JSON) in funcJSON["param"] {
+            params.append(item)
+        }
+        if params.count > 0 {
+            let node = params[0]
+            if node["type"].int == TYPE_EXPR_ID {
+                let content = node["content"]
+                // todo 赋值
+                let object = JsObject()
+                object.isEntryObject = true
+                data?.forEach({ (key: String, value: Any) in
+                    object.setValue(variable: key, value: value)
+                })
+                scope?.addVar(variable: JsVariable(name: content["name"].string!, kind: VariableKind.VAR, value: object))
+            }
+        }
+        return JsFunctionDecl(name: funcJSON["name"].string!, param: params, body: funcJSON["body"], parentScope: scope, isRecosComponent: true)
     }
     
     var body : some View {

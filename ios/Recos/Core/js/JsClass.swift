@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import UIKit
+import SwiftyJSON
 
 enum VariableKind: String {
     case LET = "let"
@@ -62,7 +63,7 @@ class JsStackFrame {
 
 class JsScope {
     var varList: [String : Any] = [:]
-    var functionList: [String : FunctionDecl] = [:]
+    var functionList: [String : JSON] = [:]
     var parentScope: JsScope?
     var extraVarList: [String : Any] = [:]
     
@@ -129,23 +130,23 @@ class JsScope {
         return headScope?.extraVarList[name]
     }
     
-    func addFunction(functionDecl: FunctionDecl) {
-        functionList[functionDecl.name] = functionDecl
+    func addFunction(functionDecl: JSON) {
+        functionList[functionDecl["name"].string!] = functionDecl
     }
     
-    func getFunction(name: String) -> FunctionDecl? {
+    func getFunction(name: String) -> JSON? {
         return functionList[name] ?? parentScope?.getFunction(name: name)
     }
 }
 
 public class JsFunctionDecl {
     var name: String
-    var param: [Node]
-    var body: Node
+    var param: [JSON]
+    var body: JSON
     var parentScope: JsScope? = nil
     var isRecosComponent: Bool = false
     
-    init(name: String, param: [Node], body: Node, parentScope: JsScope? = nil, isRecosComponent: Bool = false) {
+    init(name: String, param: [JSON], body: JSON, parentScope: JsScope? = nil, isRecosComponent: Bool = false) {
         self.name = name
         self.param = param
         self.body = body

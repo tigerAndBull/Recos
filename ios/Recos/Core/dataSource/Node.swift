@@ -214,26 +214,26 @@ public struct FunctionDecl {
         self.params = params
     }
     
-    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
-        return JsFunctionDecl(name: self.name, param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
-    }
-    
-    func toJsFunctionDeclForEntryFunc(scope: JsScope? = nil, data: [String : Any]? = nil) -> JsFunctionDecl {
-        if !self.params.isEmpty {
-            let node = self.params[0]
-            if node.type == TYPE_EXPR_ID {
-                let content = node.content as! IdInfo
-                // todo 赋值
-                let object = JsObject()
-                object.isEntryObject = true
-                data?.forEach({ (key: String, value: Any) in
-                    object.setValue(variable: key, value: value)
-                })
-                scope?.addVar(variable: JsVariable(name: content.name, kind: VariableKind.VAR, value: object))
-            }
-        }
-        return JsFunctionDecl(name: self.name, param: self.params, body: self.body, parentScope: scope, isRecosComponent: true)
-    }
+//    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
+//        return JsFunctionDecl(name: self.name, param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
+//    }
+//
+//    func toJsFunctionDeclForEntryFunc(scope: JsScope? = nil, data: [String : Any]? = nil) -> JsFunctionDecl {
+//        if !self.params.isEmpty {
+//            let node = self.params[0]
+//            if node["type"].int == TYPE_EXPR_ID {
+//                let content = node.content as! IdInfo
+//                // todo 赋值
+//                let object = JsObject()
+//                object.isEntryObject = true
+//                data?.forEach({ (key: String, value: Any) in
+//                    object.setValue(variable: key, value: value)
+//                })
+//                scope?.addVar(variable: JsVariable(name: content.name, kind: VariableKind.VAR, value: object))
+//            }
+//        }
+//        return JsFunctionDecl(name: self.name, param: self.params, body: self.body, parentScope: scope, isRecosComponent: true)
+//    }
 }
 
 struct FunctionExpr {
@@ -260,9 +260,9 @@ struct FunctionExpr {
         self.params = params
     }
     
-    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
-        return JsFunctionDecl(name: "FunctionExpr", param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
-    }
+//    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
+//        return JsFunctionDecl(name: "FunctionExpr", param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
+//    }
 }
 
 struct FunctionArrayExpr {
@@ -280,9 +280,9 @@ struct FunctionArrayExpr {
         self.params = params
     }
     
-    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
-        return JsFunctionDecl(name: "FunctionArrayExpr", param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
-    }
+//    func toJsFunctionDecl(scope: JsScope? = nil) -> JsFunctionDecl {
+//        return JsFunctionDecl(name: "FunctionArrayExpr", param: self.params, body: self.body, parentScope: scope, isRecosComponent: false)
+//    }
 }
 
 struct ValDecl {

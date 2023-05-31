@@ -7,9 +7,10 @@
 //
 
 import Foundation
+import SwiftyJSON
 
 public protocol RecosDataSource {
     func parse(bundleName: String) -> Void
-    func getModel(moduleName: String) -> FunctionDecl?
-    func getExitModule(moduleName: String) -> FunctionDecl?
+    func getModel(moduleName: String) -> JSON?
+    func getExitModule(moduleName: String) -> JSON?
 }

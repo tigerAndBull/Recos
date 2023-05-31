@@ -13,11 +13,11 @@ class DummyRecosDataSource: RecosDataSource {
     func parse(bundleName: String) {
     }
     
-    func getModel(moduleName: String) -> FunctionDecl? {
+    func getModel(moduleName: String) -> JSON? {
         return nil
     }
     
-    func getExitModule(moduleName: String) -> FunctionDecl? {
+    func getExitModule(moduleName: String) -> JSON? {
         return nil
     }
     
@@ -33,13 +33,13 @@ class BundleNodesManager {
     
     private init() {}
     
-    private var cachedBundleNodes: [String : [Node]] = [:]
+    private var cachedBundleNodes: [String : [JSON]] = [:]
     
-    public func cachedParseNodes(bundleName: String, nodes: [Node]) {
+    public func cachedParseNodes(bundleName: String, nodes: [JSON]) {
         self.cachedBundleNodes[bundleName] = nodes
     }
     
-    public func getParseNodes(bundleName: String) -> [Node]? {
+    public func getParseNodes(bundleName: String) -> [JSON]? {
         return self.cachedBundleNodes[bundleName]
     }
 }
@@ -64,13 +64,13 @@ class DefaultRecosDataSource: RecosDataSource {
     }
     
     func parse(bundleName: String) {
-        let nodes = BundleNodesManager.shared.getParseNodes(bundleName: bundleName)
-        if let nodes = nodes {
-            for node in nodes {
-                self.dummyJsEvaluator?.runNode(frame: globalStackFrame!, scope: rootScope!, node: node)
-            }
-            return
-        }
+//        let nodes = BundleNodesManager.shared.getParseNodes(bundleName: bundleName)
+//        if let nodes = nodes {
+//            for node in nodes {
+//                self.dummyJsEvaluator?.runNode(frame: globalStackFrame!, scope: rootScope!, node: node)
+//            }
+//            return
+//        }
         
         print("anwenhu 阶段 读取bundle转string 开始", Date().timeIntervalSince1970)
         let text: String = bundleProvider.getBundleContent(bundleName: bundleName)
@@ -80,20 +80,19 @@ class DefaultRecosDataSource: RecosDataSource {
         if let data = text.data(using: .utf8) {
             do {
                 let jsonObject = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
+                print("anwenhu 阶段 string转jsonObject 结束", Date().timeIntervalSince1970)
                 let json = JSON(jsonObject)
-                print("anwenhu 阶段 string转json 结束", Date().timeIntervalSince1970)
-                var nodes = [Node]()
+                var jsons = [JSON]()
                 for (_, item):(String, JSON) in json {
-                    let node = Node(json: item)
-                    if node != nil {
-                        nodes.append(node!)
+                    if item != JSON.null {
+                        jsons.append(item)
                     }
                 }
-                print("anwenhu 阶段 json转node 转换", Date().timeIntervalSince1970)
-                for node in nodes {
+                print("anwenhu 阶段 string转json 结束", Date().timeIntervalSince1970)
+                for node in jsons {
                     self.dummyJsEvaluator?.runNode(frame: globalStackFrame!, scope: rootScope!, node: node)
                 }
-                BundleNodesManager.shared.cachedParseNodes(bundleName: bundleName, nodes: nodes)
+//                BundleNodesManager.shared.cachedParseNodes(bundleName: bundleName, nodes: jsons)
                 print("anwenhu 阶段 json转node 结束", Date().timeIntervalSince1970)
             } catch {
                 print(String(format: "Recos can not parse the bundle named %@", bundleName))
@@ -101,7 +100,7 @@ class DefaultRecosDataSource: RecosDataSource {
         }
     }
     
-    func getModel(moduleName: String) -> FunctionDecl? {
+    func getModel(moduleName: String) -> JSON? {
         let function = rootScope?.getFunction(name: moduleName)
         if function != nil {
             return function
@@ -109,7 +108,7 @@ class DefaultRecosDataSource: RecosDataSource {
         return nil
     }
     
-    func getExitModule(moduleName: String) -> FunctionDecl? {
+    func getExitModule(moduleName: String) -> JSON? {
         return rootScope?.getFunction(name: moduleName)
     }
 }
